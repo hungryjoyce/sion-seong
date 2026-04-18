@@ -153,13 +153,17 @@ export default async function handler(req, res) {
     }
   }
 
-  // Privacy: purge rows that were delivered more than 30 days ago.
+  // Privacy: purge rows 30 days after delivery, AND rows that
+  // exhausted their delivery attempts and are 30+ days past their
+  // intended delivery date (so undeliverable letters don't linger).
   let purged = 0;
   try {
     const del = await sql`
       DELETE FROM letters
-      WHERE sent_at IS NOT NULL
-        AND sent_at < NOW() - INTERVAL '30 days'
+      WHERE (sent_at IS NOT NULL AND sent_at < NOW() - INTERVAL '30 days')
+         OR (sent_at IS NULL
+             AND attempts >= ${MAX_ATTEMPTS}
+             AND deliver_on < CURRENT_DATE - INTERVAL '30 days')
       RETURNING id
     `;
     purged = del.length;
