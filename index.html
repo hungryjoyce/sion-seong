@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>A Letter To Your Future Self</title>
+
+<!-- ============================================================
+     CONFIG — edit these values to point the form at your Brevo
+     account and sender identity. The API key is used client-side
+     via fetch(); treat it as semi-public.
+     ============================================================ -->
+<script>
+const CONFIG = {
+  BREVO_API_KEY: "YOUR_BREVO_API_KEY_HERE",
+  FROM_EMAIL: "no.reply.lettersforyou@gmail.com",
+  FROM_NAME: "A Letter To Your Future Self"
+};
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --cream: #f5ecd7;
+    --cream-deep: #efe3c2;
+    --parchment: #f8efd6;
+    --ink: #3a2a1a;
+    --ink-soft: #5a4431;
+    --wax: #8a1c1c;
+    --wax-deep: #5c0f0f;
+    --wax-glow: #d44a3a;
+    --postmark: #6b3b2a;
+    --shadow: rgba(60, 40, 20, 0.25);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+  }
+
+  body {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    color: var(--ink);
+    background-color: #e9d9b3;
+    background-image:
+      radial-gradient(circle at 20% 15%, rgba(120, 80, 40, 0.18), transparent 55%),
+      radial-gradient(circle at 80% 80%, rgba(90, 60, 30, 0.22), transparent 60%),
+      radial-gradient(circle at 50% 50%, rgba(255, 240, 200, 0.35), transparent 70%),
+      repeating-linear-gradient(45deg, rgba(120, 80, 40, 0.04) 0 2px, transparent 2px 5px),
+      repeating-linear-gradient(-45deg, rgba(80, 50, 20, 0.05) 0 3px, transparent 3px 7px);
+    background-attachment: fixed;
+    padding: 32px 16px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  header.page-head {
+    text-align: center;
+    margin-bottom: 24px;
+    max-width: 640px;
+  }
+
+  header.page-head h1 {
+    font-family: "Caveat", cursive;
+    font-weight: 700;
+    font-size: clamp(2.4rem, 6vw, 3.4rem);
+    margin: 0 0 6px;
+    color: var(--ink);
+    letter-spacing: 0.5px;
+  }
+
+  header.page-head p {
+    font-style: italic;
+    font-size: 1.05rem;
+    margin: 0;
+    color: var(--ink-soft);
+  }
+
+  /* Letter card */
+  .letter {
+    position: relative;
+    width: 100%;
+    max-width: 620px;
+    background: var(--parchment);
+    background-image:
+      radial-gradient(ellipse at top left, rgba(180, 140, 80, 0.12), transparent 55%),
+      radial-gradient(ellipse at bottom right, rgba(120, 80, 40, 0.15), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(120, 80, 40, 0.025) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(120, 80, 40, 0.02) 0 1px, transparent 1px 4px);
+    border-radius: 4px;
+    padding: 44px 36px 36px;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.6) inset,
+      0 0 0 1px rgba(120, 80, 40, 0.15),
+      0 18px 40px -10px var(--shadow),
+      0 30px 60px -30px rgba(40, 20, 0, 0.4);
+    transform-origin: center top;
+    transition: transform 0.9s cubic-bezier(.6,.05,.3,1), opacity 0.9s ease;
+  }
+
+  /* Torn edge feel */
+  .letter::before, .letter::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0;
+    height: 8px;
+    background-image:
+      radial-gradient(circle at 6px 0, transparent 3px, var(--parchment) 3.5px);
+    background-size: 12px 8px;
+    pointer-events: none;
+  }
+  .letter::before { top: -1px; }
+  .letter::after { bottom: -1px; transform: scaleY(-1); }
+
+  /* Stamp + postmark area */
+  .stamp-area {
+    position: absolute;
+    top: 16px;
+    right: 22px;
+    width: 90px;
+    height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .selected-stamp {
+    width: 74px;
+    height: 92px;
+    border: 2px dashed var(--ink-soft);
+    background: #fbf4dc;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    box-shadow: 0 4px 8px rgba(80, 50, 20, 0.2), 0 0 0 4px #fbf4dc;
+    transform: rotate(4deg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .selected-stamp::after {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(90, 60, 30, 0.35);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+  .selected-stamp .label {
+    position: absolute;
+    bottom: 4px;
+    left: 0; right: 0;
+    font-family: "Special Elite", monospace;
+    font-size: 7px;
+    text-align: center;
+    color: var(--ink-soft);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .postmark {
+    position: absolute;
+    top: 20px;
+    right: -6px;
+    width: 120px;
+    height: 120px;
+    transform: rotate(-14deg);
+    pointer-events: none;
+    opacity: 0.55;
+  }
+
+  .postmark svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Letter header */
+  .letter h2.salutation {
+    font-family: "Caveat", cursive;
+    font-weight: 600;
+    font-size: 1.8rem;
+    margin: 0 0 4px;
+    color: var(--ink);
+  }
+
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: "Special Elite", monospace;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    opacity: 0.8;
+  }
+
+  /* Textarea styled like handwriting on ruled lines */
+  textarea.letter-body {
+    width: 100%;
+    min-height: 260px;
+    border: none;
+    outline: none;
+    background: transparent;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0 31px,
+      rgba(120, 80, 40, 0.18) 31px 32px
+    );
+    resize: vertical;
+    font-family: "Caveat", cursive;
+    font-size: 1.45rem;
+    line-height: 32px;
+    color: var(--ink);
+    padding: 0 2px;
+  }
+
+  textarea.letter-body:focus {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0 31px,
+      rgba(120, 80, 40, 0.28) 31px 32px
+    );
+  }
+
+  /* Field rows */
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 24px;
+  }
+
+  @media (max-width: 520px) {
+    .field-grid { grid-template-columns: 1fr; }
+    .letter { padding: 44px 22px 28px; }
+    .stamp-area { top: 10px; right: 10px; width: 78px; height: 96px; }
+    .selected-stamp { width: 64px; height: 78px; font-size: 1.6rem; }
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field label {
+    font-family: "Special Elite", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .field input, .field select {
+    font-family: "Caveat", cursive;
+    font-size: 1.25rem;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(90, 60, 30, 0.5);
+    padding: 4px 2px 6px;
+    color: var(--ink);
+    outline: none;
+  }
+
+  .field input:focus, .field select:focus {
+    border-bottom-color: var(--ink);
+  }
+
+  /* Stamp picker */
+  .stamp-picker {
+    margin-top: 26px;
+  }
+
+  .stamp-picker .picker-label {
+    font-family: "Special Elite", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+  }
+
+  .stamps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .stamp {
+    width: 58px;
+    height: 72px;
+    border: 2px dashed rgba(90, 60, 30, 0.6);
+    background: #fbf4dc;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    position: relative;
+    padding-bottom: 10px;
+  }
+
+  .stamp:hover {
+    transform: translateY(-2px) rotate(-2deg);
+    box-shadow: 0 4px 10px rgba(80, 50, 20, 0.2);
+  }
+
+  .stamp.selected {
+    background: #f6e6b6;
+    box-shadow: 0 0 0 2px var(--wax), 0 4px 10px rgba(80, 50, 20, 0.25);
+    transform: rotate(-3deg);
+  }
+
+  .stamp .stamp-label {
+    font-family: "Special Elite", monospace;
+    font-size: 7px;
+    position: absolute;
+    bottom: 3px;
+    color: var(--ink-soft);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* Divider */
+  .divider {
+    border: none;
+    border-top: 1px dashed rgba(90, 60, 30, 0.5);
+    margin: 28px 0 20px;
+  }
+
+  /* Wax seal submit */
+  .seal-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .wax-seal {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    background:
+      radial-gradient(circle at 35% 30%, #d94a3a 0%, var(--wax) 40%, var(--wax-deep) 80%);
+    box-shadow:
+      inset -6px -8px 14px rgba(0, 0, 0, 0.45),
+      inset 6px 8px 14px rgba(255, 180, 160, 0.25),
+      0 6px 14px rgba(0, 0, 0, 0.35);
+    color: #f6d8c9;
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 2.4rem;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  }
+
+  .wax-seal::before {
+    content: "";
+    position: absolute;
+    inset: 10px;
+    border-radius: 50%;
+    border: 1.5px dashed rgba(255, 220, 200, 0.35);
+    pointer-events: none;
+  }
+
+  .wax-seal:hover {
+    transform: scale(1.03);
+  }
+
+  .wax-seal:disabled {
+    cursor: wait;
+    filter: grayscale(0.3);
+  }
+
+  .wax-seal.pressed {
+    animation: sealPress 0.7s ease;
+  }
+
+  @keyframes sealPress {
+    0%   { transform: scale(1); box-shadow: inset -6px -8px 14px rgba(0,0,0,0.45), inset 6px 8px 14px rgba(255,180,160,0.25), 0 6px 14px rgba(0,0,0,0.35); }
+    35%  { transform: scale(1.18); box-shadow: 0 0 0 12px rgba(212, 74, 58, 0.25), 0 0 40px 8px rgba(212, 74, 58, 0.5), inset -6px -8px 14px rgba(0,0,0,0.45); }
+    70%  { transform: scale(0.96); }
+    100% { transform: scale(1); }
+  }
+
+  .seal-caption {
+    text-align: center;
+    font-style: italic;
+    color: var(--ink-soft);
+    margin-top: 10px;
+    font-size: 1.05rem;
+  }
+
+  /* Status + envelope fold animation */
+  .status {
+    text-align: center;
+    margin-top: 18px;
+    font-family: "Caveat", cursive;
+    font-size: 1.3rem;
+    min-height: 1.6rem;
+    color: var(--ink);
+  }
+
+  .status.error {
+    color: var(--wax-deep);
+  }
+
+  .letter.folding {
+    animation: foldAway 1.6s cubic-bezier(.7,.05,.3,1) forwards;
+    pointer-events: none;
+  }
+
+  @keyframes foldAway {
+    0%   { transform: scale(1) rotateX(0) translateY(0); opacity: 1; }
+    35%  { transform: scale(0.9) rotateX(0) translateY(6px); opacity: 1; }
+    55%  { transform: scale(0.6, 0.4) rotateX(30deg) translateY(40px); opacity: 0.9; }
+    80%  { transform: scale(0.35, 0.22) rotateX(50deg) translateY(120px); opacity: 0.7; }
+    100% { transform: scale(0.25, 0.1) rotateX(70deg) translateY(200px); opacity: 0; }
+  }
+
+  .envelope-success {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 48px 28px;
+    text-align: center;
+    background: var(--cream);
+    background-image:
+      linear-gradient(135deg, rgba(255, 230, 180, 0.4), transparent 60%),
+      repeating-linear-gradient(45deg, rgba(120, 80, 40, 0.04) 0 2px, transparent 2px 5px);
+    border-radius: 6px;
+    box-shadow: 0 18px 40px -10px var(--shadow), 0 0 0 1px rgba(120, 80, 40, 0.2);
+    display: none;
+    position: relative;
+  }
+
+  .envelope-success.show {
+    display: block;
+    animation: envelopeIn 0.9s ease 0.4s backwards;
+  }
+
+  @keyframes envelopeIn {
+    0%   { opacity: 0; transform: scale(0.85) translateY(-10px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .envelope-success .seal-mini {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    margin: 0 auto 14px;
+    background: radial-gradient(circle at 35% 30%, #d94a3a 0%, var(--wax) 40%, var(--wax-deep) 80%);
+    box-shadow: inset -3px -4px 6px rgba(0,0,0,0.4), 0 4px 10px rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+    color: #f6d8c9; font-family: "Cormorant Garamond", serif; font-style: italic; font-weight: 600; font-size: 1.3rem;
+  }
+
+  .envelope-success h3 {
+    font-family: "Caveat", cursive;
+    font-weight: 600;
+    font-size: 2rem;
+    margin: 0 0 10px;
+    color: var(--ink);
+  }
+
+  .envelope-success p {
+    font-style: italic;
+    color: var(--ink-soft);
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.5;
+  }
+
+  .envelope-success .again {
+    margin-top: 22px;
+    background: none;
+    border: 1px solid rgba(90, 60, 30, 0.5);
+    padding: 8px 18px;
+    font-family: "Special Elite", monospace;
+    font-size: 0.75rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .envelope-success .again:hover { background: rgba(120, 80, 40, 0.08); }
+
+  footer.page-foot {
+    margin-top: 36px;
+    font-family: "Special Elite", monospace;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    opacity: 0.7;
+    letter-spacing: 1.5px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <h1>A Letter To Your Future Self</h1>
+  <p>Write today. Open it on a January morning, years from now.</p>
+</header>
+
+<form class="letter" id="letterForm" novalidate>
+
+  <div class="stamp-area">
+    <div class="selected-stamp" id="selectedStamp">
+      <span id="selectedStampEmoji">🌸</span>
+      <span class="label" id="selectedStampLabel">Japan</span>
+    </div>
+    <div class="postmark" aria-hidden="true">
+      <svg viewBox="0 0 120 120">
+        <defs>
+          <filter id="ink">
+            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3"/>
+            <feDisplacementMap in="SourceGraphic" scale="2"/>
+          </filter>
+        </defs>
+        <g fill="none" stroke="#4a2a1a" stroke-width="2" filter="url(#ink)">
+          <circle cx="60" cy="60" r="50"/>
+          <circle cx="60" cy="60" r="42"/>
+          <text x="60" y="40" text-anchor="middle" font-family="Special Elite, monospace" font-size="9" fill="#4a2a1a" stroke="none" letter-spacing="2">FUTURE</text>
+          <text x="60" y="86" text-anchor="middle" font-family="Special Elite, monospace" font-size="9" fill="#4a2a1a" stroke="none" letter-spacing="2">DELIVERY</text>
+          <line x1="20" y1="60" x2="42" y2="60"/>
+          <line x1="78" y1="60" x2="100" y2="60"/>
+          <text x="60" y="66" text-anchor="middle" font-family="Special Elite, monospace" font-size="11" fill="#4a2a1a" stroke="none">★</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <h2 class="salutation">To my future self —</h2>
+  <div class="meta-row">
+    <span id="todayStamp"></span>
+    <span>Hand-written</span>
+  </div>
+
+  <textarea class="letter-body" id="letterBody" spellcheck="true">Dear future me,
+
+</textarea>
+
+  <div class="field-grid">
+    <div class="field">
+      <label for="emailInput">Send to</label>
+      <input type="email" id="emailInput" placeholder="you@example.com" required>
+    </div>
+    <div class="field">
+      <label for="yearInput">Deliver on Jan 1st of</label>
+      <select id="yearInput"></select>
+    </div>
+  </div>
+
+  <div class="stamp-picker">
+    <div class="picker-label">Choose a stamp</div>
+    <div class="stamps" id="stamps"></div>
+  </div>
+
+  <hr class="divider" />
+
+  <div class="seal-wrap">
+    <button type="submit" class="wax-seal" id="waxSeal" aria-label="Seal and send">S</button>
+  </div>
+  <div class="seal-caption">Press to seal.</div>
+  <div class="status" id="status" role="status" aria-live="polite"></div>
+
+</form>
+
+<section class="envelope-success" id="success">
+  <div class="seal-mini">S</div>
+  <h3 id="successTitle">Sealed.</h3>
+  <p id="successMsg">It'll find you on January 1st.</p>
+  <button type="button" class="again" id="writeAgain">Write another</button>
+</section>
+
+<footer class="page-foot">Written with ink. Kept for time.</footer>
+
+<script>
+  // ---- stamp choices ---------------------------------------------------
+  const STAMPS = [
+    { emoji: "🌸", label: "Japan" },
+    { emoji: "🗼", label: "Paris" },
+    { emoji: "🌊", label: "Hawaii" },
+    { emoji: "🍁", label: "Canada" },
+    { emoji: "🌙", label: "Morocco" },
+    { emoji: "🌿", label: "New Zealand" }
+  ];
+
+  let selectedStampIndex = 0;
+
+  const stampsEl = document.getElementById("stamps");
+  STAMPS.forEach((s, i) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "stamp" + (i === 0 ? " selected" : "");
+    btn.innerHTML = `<span>${s.emoji}</span><span class="stamp-label">${s.label}</span>`;
+    btn.addEventListener("click", () => {
+      selectedStampIndex = i;
+      document.querySelectorAll(".stamp").forEach(el => el.classList.remove("selected"));
+      btn.classList.add("selected");
+      document.getElementById("selectedStampEmoji").textContent = s.emoji;
+      document.getElementById("selectedStampLabel").textContent = s.label;
+    });
+    stampsEl.appendChild(btn);
+  });
+
+  // ---- year dropdown (1..10 years from now) ----------------------------
+  const yearSelect = document.getElementById("yearInput");
+  const thisYear = new Date().getFullYear();
+  for (let i = 1; i <= 10; i++) {
+    const y = thisYear + i;
+    const opt = document.createElement("option");
+    opt.value = String(y);
+    opt.textContent = `${y}  (${i} year${i > 1 ? "s" : ""} from now)`;
+    yearSelect.appendChild(opt);
+  }
+
+  // ---- today stamp -----------------------------------------------------
+  const fmtDate = (d) => d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+  document.getElementById("todayStamp").textContent = fmtDate(new Date());
+
+  // ---- helpers ---------------------------------------------------------
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function buildEmailHtml({ letter, writtenDate, deliveryYear, stamp }) {
+    const safeLetter = escapeHtml(letter).replace(/\n/g, "<br>");
+    return `<!doctype html>
+<html><body style="margin:0;padding:0;background:#e9d9b3;font-family:Georgia,'Cormorant Garamond',serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#e9d9b3;padding:32px 12px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fdf6e3;border-radius:4px;box-shadow:0 18px 40px rgba(60,40,20,0.25);">
+        <tr><td style="padding:44px 40px 36px;color:#3a2a1a;">
+          <div style="text-align:right;font-size:28px;margin-bottom:8px;">${stamp.emoji}</div>
+          <div style="font-family:'Courier New',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7a5a3a;margin-bottom:6px;">
+            Delivered · January 1, ${deliveryYear}
+          </div>
+          <h1 style="font-family:Georgia,serif;font-style:italic;font-weight:normal;font-size:26px;margin:0 0 18px;color:#3a2a1a;">
+            A letter you wrote to yourself.
+          </h1>
+          <div style="font-family:Georgia,serif;font-size:17px;line-height:1.7;color:#3a2a1a;white-space:normal;">
+            ${safeLetter}
+          </div>
+          <hr style="border:none;border-top:1px dashed #8a6a4a;margin:28px 0;">
+          <div style="font-family:'Courier New',monospace;font-size:11px;letter-spacing:1.5px;color:#7a5a3a;text-align:center;text-transform:uppercase;">
+            Written ${writtenDate}. Meant for today.
+          </div>
+        </td></tr>
+      </table>
+      <div style="font-family:'Courier New',monospace;font-size:10px;color:#7a5a3a;margin-top:16px;letter-spacing:1.5px;">
+        A Letter To Your Future Self
+      </div>
+    </td></tr>
+  </table>
+</body></html>`;
+  }
+
+  // Brevo accepts ISO 8601 with offset. Schedule for Jan 1 at 09:00 UTC.
+  function scheduledAtFor(year) {
+    return `${year}-01-01T09:00:00.000+00:00`;
+  }
+
+  // ---- submit ----------------------------------------------------------
+  const form = document.getElementById("letterForm");
+  const statusEl = document.getElementById("status");
+  const seal = document.getElementById("waxSeal");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    statusEl.classList.remove("error");
+    statusEl.textContent = "";
+
+    const email = document.getElementById("emailInput").value.trim();
+    const year = document.getElementById("yearInput").value;
+    const letter = document.getElementById("letterBody").value.trim();
+    const stamp = STAMPS[selectedStampIndex];
+
+    if (!letter) {
+      statusEl.textContent = "Write something first.";
+      statusEl.classList.add("error");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      statusEl.textContent = "That email doesn't look quite right.";
+      statusEl.classList.add("error");
+      return;
+    }
+
+    seal.classList.remove("pressed");
+    // force reflow so the animation replays
+    void seal.offsetWidth;
+    seal.classList.add("pressed");
+    seal.disabled = true;
+    statusEl.textContent = "Pressing the seal…";
+
+    const writtenDate = fmtDate(new Date());
+    const htmlContent = buildEmailHtml({
+      letter, writtenDate, deliveryYear: year, stamp
+    });
+
+    const payload = {
+      sender: { email: CONFIG.FROM_EMAIL, name: CONFIG.FROM_NAME },
+      to: [{ email }],
+      subject: "A letter to you — open today 🕰️",
+      htmlContent,
+      scheduledAt: scheduledAtFor(year)
+    };
+
+    try {
+      const resp = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "content-type": "application/json",
+          "api-key": CONFIG.BREVO_API_KEY
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!resp.ok) {
+        let detail = "";
+        try {
+          const data = await resp.json();
+          detail = data.message || data.code || JSON.stringify(data);
+        } catch (_) { detail = await resp.text(); }
+        throw new Error(detail || `HTTP ${resp.status}`);
+      }
+
+      // success — fold the letter and show the envelope
+      setTimeout(() => {
+        form.classList.add("folding");
+        setTimeout(() => {
+          form.style.display = "none";
+          document.getElementById("successTitle").textContent = "Sealed.";
+          document.getElementById("successMsg").textContent =
+            `It'll find you on January 1st, ${year}.`;
+          document.getElementById("success").classList.add("show");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }, 1500);
+      }, 400);
+
+    } catch (err) {
+      console.error(err);
+      statusEl.classList.add("error");
+      statusEl.textContent = "The seal wouldn't take: " + err.message;
+      seal.disabled = false;
+    }
+  });
+
+  document.getElementById("writeAgain").addEventListener("click", () => {
+    document.getElementById("success").classList.remove("show");
+    form.classList.remove("folding");
+    form.style.display = "";
+    seal.disabled = false;
+    seal.classList.remove("pressed");
+    statusEl.textContent = "";
+    document.getElementById("letterBody").value = "Dear future me,\n\n";
+    document.getElementById("letterBody").focus();
+  });
+</script>
+</body>
+</html>
