@@ -27,9 +27,12 @@ export function ensureSchema() {
         sent_at TIMESTAMPTZ,
         attempts INT NOT NULL DEFAULT 0,
         last_error TEXT,
+        consent_given_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `.then(() =>
+      sql`ALTER TABLE letters ADD COLUMN IF NOT EXISTS consent_given_at TIMESTAMPTZ`
+    ).then(() =>
       sql`CREATE INDEX IF NOT EXISTS letters_due_idx ON letters (deliver_on) WHERE sent_at IS NULL`
     ).catch((err) => {
       schemaPromise = null;

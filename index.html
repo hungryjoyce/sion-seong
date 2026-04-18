@@ -335,6 +335,56 @@ const CONFIG = {
     text-transform: uppercase;
   }
 
+  /* Consent checkbox */
+  .consent {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-top: 22px;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 0.98rem;
+    font-style: italic;
+    color: var(--ink-soft);
+    line-height: 1.45;
+    cursor: pointer;
+  }
+
+  .consent input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid rgba(90, 60, 30, 0.6);
+    background: #fbf4dc;
+    border-radius: 2px;
+    cursor: pointer;
+    margin: 3px 0 0;
+    flex-shrink: 0;
+    position: relative;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .consent input[type="checkbox"]:hover {
+    border-color: var(--ink);
+  }
+
+  .consent input[type="checkbox"]:checked {
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+
+  .consent input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 10px;
+    border: solid #fbf4dc;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
   /* Divider */
   .divider {
     border: none;
@@ -574,6 +624,15 @@ const CONFIG = {
     <div class="stamps" id="stamps"></div>
   </div>
 
+  <label class="consent" for="consentInput">
+    <input type="checkbox" id="consentInput" required>
+    <span>
+      I understand that my email address and letter will be stored
+      until the delivery date, and sent to me through a third-party
+      email service (Brevo) for that purpose only.
+    </span>
+  </label>
+
   <hr class="divider" />
 
   <div class="seal-wrap">
@@ -651,6 +710,7 @@ const CONFIG = {
     const year = document.getElementById("yearInput").value;
     const letter = document.getElementById("letterBody").value.trim();
     const stamp = STAMPS[selectedStampIndex];
+    const consent = document.getElementById("consentInput").checked;
 
     if (!letter) {
       statusEl.textContent = "Write something first.";
@@ -659,6 +719,11 @@ const CONFIG = {
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       statusEl.textContent = "That email doesn't look quite right.";
+      statusEl.classList.add("error");
+      return;
+    }
+    if (!consent) {
+      statusEl.textContent = "Please tick the box to agree before sealing.";
       statusEl.classList.add("error");
       return;
     }
@@ -678,7 +743,8 @@ const CONFIG = {
           email,
           year,
           letter,
-          stampLabel: stamp.label
+          stampLabel: stamp.label,
+          consent
         })
       });
 
@@ -720,6 +786,7 @@ const CONFIG = {
     seal.classList.remove("pressed");
     statusEl.textContent = "";
     document.getElementById("letterBody").value = "Dear future me,\n\n";
+    document.getElementById("consentInput").checked = false;
     document.getElementById("letterBody").focus();
   });
 </script>

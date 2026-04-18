@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   }
 
   const body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
-  const { email, year, letter, stampLabel } = body;
+  const { email, year, letter, stampLabel, consent } = body;
 
   if (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ error: "Please enter a valid email." });
@@ -34,14 +34,17 @@ export default async function handler(req, res) {
   if (typeof stampLabel !== "string" || !ALLOWED_STAMPS.has(stampLabel)) {
     return res.status(400).json({ error: "Pick one of the stamps." });
   }
+  if (consent !== true) {
+    return res.status(400).json({ error: "Consent is required to store and deliver the letter." });
+  }
 
   try {
     await ensureSchema();
     const deliverOn = `${deliveryYear}-01-01`;
     const writtenOn = new Date().toISOString().slice(0, 10);
     await sql`
-      INSERT INTO letters (email, deliver_on, letter, stamp_label, written_on)
-      VALUES (${email}, ${deliverOn}, ${letter.trim()}, ${stampLabel}, ${writtenOn})
+      INSERT INTO letters (email, deliver_on, letter, stamp_label, written_on, consent_given_at)
+      VALUES (${email}, ${deliverOn}, ${letter.trim()}, ${stampLabel}, ${writtenOn}, NOW())
     `;
     return res.status(200).json({ ok: true, deliveryYear });
   } catch (err) {
