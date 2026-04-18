@@ -456,7 +456,19 @@ const CONFIG = {
     color: var(--ink-soft);
     margin-top: 10px;
     font-size: 1.05rem;
+    line-height: 1.7;
   }
+
+  .preview-link {
+    font-family: "Caveat", cursive;
+    font-style: normal;
+    font-size: 1.15rem;
+    color: var(--ink-soft);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  .preview-link:hover { color: var(--ink); }
 
   /* Status + envelope fold animation */
   .status {
@@ -639,7 +651,11 @@ const CONFIG = {
   <div class="seal-wrap">
     <button type="submit" class="wax-seal" id="waxSeal" aria-label="Seal and send">S</button>
   </div>
-  <div class="seal-caption">Press to seal.</div>
+  <div class="seal-caption">
+    Press to seal.
+    <br>
+    <a href="#" class="preview-link" id="previewLink">Preview the email first</a>
+  </div>
   <div class="status" id="status" role="status" aria-live="polite"></div>
 
 </form>
@@ -777,6 +793,45 @@ const CONFIG = {
       statusEl.textContent = "The seal wouldn't take: " + err.message;
       seal.disabled = false;
     }
+  });
+
+  // ---- preview link ---------------------------------------------------
+  document.getElementById("previewLink").addEventListener("click", (e) => {
+    e.preventDefault();
+    const win = window.open("", "_blank");
+    if (!win) {
+      statusEl.classList.add("error");
+      statusEl.textContent = "Allow pop-ups to preview the email.";
+      return;
+    }
+    win.document.write(
+      '<!doctype html><title>Preview…</title>' +
+      '<body style="font-family:Georgia,serif;color:#7a5a3a;text-align:center;padding:40px;">' +
+      'Preparing your preview…</body>'
+    );
+
+    const body = JSON.stringify({
+      letter: document.getElementById("letterBody").value,
+      year: document.getElementById("yearInput").value,
+      stampLabel: STAMPS[selectedStampIndex].label
+    });
+
+    fetch("/api/preview", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body
+    }).then(r => r.text()).then(html => {
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+    }).catch(() => {
+      win.document.open();
+      win.document.write(
+        '<body style="font-family:Georgia,serif;color:#7a5a3a;text-align:center;padding:40px;">' +
+        'Preview failed. Try again.</body>'
+      );
+      win.document.close();
+    });
   });
 
   document.getElementById("writeAgain").addEventListener("click", () => {
