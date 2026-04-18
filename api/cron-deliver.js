@@ -153,10 +153,25 @@ export default async function handler(req, res) {
     }
   }
 
+  // Privacy: purge rows that were delivered more than 30 days ago.
+  let purged = 0;
+  try {
+    const del = await sql`
+      DELETE FROM letters
+      WHERE sent_at IS NOT NULL
+        AND sent_at < NOW() - INTERVAL '30 days'
+      RETURNING id
+    `;
+    purged = del.length;
+  } catch (err) {
+    console.error("cleanup failed:", err);
+  }
+
   return res.status(200).json({
     checked: due.length,
     sent,
     failed,
+    purged,
     capped: due.length === MAX_PER_RUN
   });
 }

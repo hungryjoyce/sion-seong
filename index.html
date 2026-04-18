@@ -12,7 +12,9 @@
      ============================================================ -->
 <script>
 const CONFIG = {
-  SEND_ENDPOINT: "/api/send"
+  SEND_ENDPOINT: "/api/send",
+  // Email people can write to for deletion requests. Change this.
+  CONTACT_EMAIL: "hello@example.com"
 };
 </script>
 
@@ -557,10 +559,95 @@ const CONFIG = {
     font-family: "Special Elite", monospace;
     font-size: 0.72rem;
     color: var(--ink-soft);
-    opacity: 0.7;
+    opacity: 0.8;
     letter-spacing: 1.5px;
     text-align: center;
+    line-height: 1.9;
   }
+
+  .privacy-link {
+    color: var(--ink-soft);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    opacity: 0.85;
+  }
+  .privacy-link:hover { color: var(--ink); opacity: 1; }
+
+  /* Privacy modal */
+  .privacy-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(40, 25, 10, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+  }
+  .privacy-overlay.show {
+    display: flex;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .privacy-card {
+    position: relative;
+    background: var(--parchment);
+    background-image:
+      radial-gradient(ellipse at top left, rgba(180, 140, 80, 0.12), transparent 55%),
+      repeating-linear-gradient(0deg, rgba(120, 80, 40, 0.025) 0 1px, transparent 1px 3px);
+    max-width: 520px;
+    width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 36px 32px 28px;
+    border-radius: 4px;
+    box-shadow: 0 18px 40px -10px var(--shadow), 0 0 0 1px rgba(120, 80, 40, 0.2);
+    font-family: "Cormorant Garamond", Georgia, serif;
+    color: var(--ink);
+    line-height: 1.6;
+  }
+
+  .privacy-card h3 {
+    font-family: "Caveat", cursive;
+    font-weight: 600;
+    font-size: 1.8rem;
+    margin: 0 0 14px;
+    color: var(--ink);
+  }
+
+  .privacy-card p {
+    margin: 0 0 12px;
+    font-size: 1.02rem;
+  }
+
+  .privacy-card p.small {
+    font-size: 0.92rem;
+    font-style: italic;
+    color: var(--ink-soft);
+    margin-top: 16px;
+  }
+
+  .privacy-card a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .privacy-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--ink-soft);
+    padding: 4px 8px;
+  }
+  .privacy-close:hover { color: var(--ink); }
 </style>
 </head>
 <body>
@@ -650,7 +737,39 @@ const CONFIG = {
   <button type="button" class="again" id="writeAgain">Write another</button>
 </section>
 
-<footer class="page-foot">Written with ink. Kept for time.</footer>
+<footer class="page-foot">
+  Written with ink. Kept for time.
+  <br>
+  <a href="#" id="privacyLink" class="privacy-link">A note on privacy</a>
+</footer>
+
+<div class="privacy-overlay" id="privacyOverlay" aria-hidden="true">
+  <div class="privacy-card" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
+    <button type="button" class="privacy-close" id="privacyClose" aria-label="Close">×</button>
+    <h3 id="privacyTitle">A note on privacy</h3>
+    <p>
+      When you seal a letter, we save a few things so we can deliver it:
+      your email address, the letter you wrote, the delivery date, the
+      stamp you picked, and a timestamp for your consent.
+    </p>
+    <p>
+      That data lives in a Neon Postgres database until delivery day,
+      when it's passed to Brevo — a transactional email service — to
+      send the email. Thirty days after delivery, everything is deleted
+      automatically.
+    </p>
+    <p>
+      You can ask us to delete your letter earlier — any time, even
+      before delivery. Email
+      <a id="contactMail" href="#"></a>
+      and we'll remove it from the database right away.
+    </p>
+    <p class="small">
+      We don't use this data for anything else and we don't share it
+      with anyone besides Brevo.
+    </p>
+  </div>
+</div>
 
 <script>
   // ---- stamp choices ---------------------------------------------------
@@ -777,6 +896,28 @@ const CONFIG = {
       seal.disabled = false;
     }
   });
+
+  // ---- privacy modal --------------------------------------------------
+  const overlay = document.getElementById("privacyOverlay");
+  const contactMail = document.getElementById("contactMail");
+  contactMail.textContent = CONFIG.CONTACT_EMAIL;
+  contactMail.href = "mailto:" + CONFIG.CONTACT_EMAIL + "?subject=" +
+    encodeURIComponent("Please delete my letter");
+
+  function openPrivacy() {
+    overlay.classList.add("show");
+    overlay.setAttribute("aria-hidden", "false");
+  }
+  function closePrivacy() {
+    overlay.classList.remove("show");
+    overlay.setAttribute("aria-hidden", "true");
+  }
+  document.getElementById("privacyLink").addEventListener("click", (e) => {
+    e.preventDefault(); openPrivacy();
+  });
+  document.getElementById("privacyClose").addEventListener("click", closePrivacy);
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) closePrivacy(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePrivacy(); });
 
   document.getElementById("writeAgain").addEventListener("click", () => {
     document.getElementById("success").classList.remove("show");
