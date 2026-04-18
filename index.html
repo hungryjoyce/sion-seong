@@ -414,9 +414,10 @@ const CONFIG = {
       0 6px 14px rgba(0, 0, 0, 0.35);
     color: #f6d8c9;
     font-family: "Cormorant Garamond", serif;
-    font-style: italic;
-    font-weight: 600;
-    font-size: 2.4rem;
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
     transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
   }
@@ -530,7 +531,7 @@ const CONFIG = {
     background: radial-gradient(circle at 35% 30%, #d94a3a 0%, var(--wax) 40%, var(--wax-deep) 80%);
     box-shadow: inset -3px -4px 6px rgba(0,0,0,0.4), 0 4px 10px rgba(0,0,0,0.3);
     display: flex; align-items: center; justify-content: center;
-    color: #f6d8c9; font-family: "Cormorant Garamond", serif; font-style: italic; font-weight: 600; font-size: 1.3rem;
+    color: #f6d8c9; font-family: "Cormorant Garamond", serif; font-weight: 700; font-size: 0.65rem; letter-spacing: 1.5px; text-transform: uppercase;
   }
 
   .envelope-success h3 {
@@ -649,7 +650,7 @@ const CONFIG = {
   <hr class="divider" />
 
   <div class="seal-wrap">
-    <button type="submit" class="wax-seal" id="waxSeal" aria-label="Seal and send">S</button>
+    <button type="submit" class="wax-seal" id="waxSeal" aria-label="Seal and send">SEND</button>
   </div>
   <div class="seal-caption">
     Press to seal.
@@ -661,7 +662,7 @@ const CONFIG = {
 </form>
 
 <section class="envelope-success" id="success">
-  <div class="seal-mini">S</div>
+  <div class="seal-mini">SENT</div>
   <h3 id="successTitle">Sealed.</h3>
   <p id="successMsg">It'll find you on January 1st.</p>
   <button type="button" class="again" id="writeAgain">Write another</button>
